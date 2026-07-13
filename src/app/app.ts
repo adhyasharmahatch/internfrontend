@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from './header/header.component';
-import { InternService, Intern, Role, InternshipType } from './services/intern.service';
+import { AuthUser, InternService, Intern, Role, InternshipType } from './services/intern.service';
 
 interface AuthMode { value: 'signin' | 'signup'; label: string; subtitle: string; }
 
@@ -123,12 +123,29 @@ export class App implements OnInit {
 
   ngOnInit() {
     const savedUser = localStorage.getItem('hatch_current_user');
-    if (savedUser) {
+    const token = this.internService.authToken();
+
+    if (token && savedUser) {
       const parsed = JSON.parse(savedUser);
       this.currentUser.set(parsed);
       this.isAuthenticated.set(true);
+      this.loadData();
+    } else if (token) {
+      this.internService.me().subscribe({
+        next: (user) => {
+          this.currentUser.set(user);
+          this.isAuthenticated.set(true);
+          localStorage.setItem('hatch_current_user', JSON.stringify(user));
+          this.loadData();
+        },
+        error: () => {
+          this.internService.setAuthToken(null);
+          localStorage.removeItem('hatch_current_user');
+          this.isAuthenticated.set(false);
+          this.currentUser.set(null);
+        }
+      });
     }
-    this.loadData();
   }
 
   showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
@@ -143,6 +160,10 @@ export class App implements OnInit {
   }
 
   loadData() {
+    if (!this.isAuthenticated()) {
+      return;
+    }
+
     this.internService.getInterns().subscribe({
       next: (data) => {
         this.interns.set(data);
@@ -197,31 +218,73 @@ export class App implements OnInit {
 
   submitAuth() {
     const email = this.authEmail.trim().toLowerCase();
+    const password = this.authPassword.trim();
+
+    if (!email || !password) {
+      this.authError.set('Email and password are required.');
+      return;
+    }
 
     if (!email.endsWith('@hatch.com')) {
       this.authError.set('Please use a corporate email that ends with @hatch.com.');
       return;
     }
 
-    const name = this.authName.trim() || email.split('@')[0].replace(/\./g, ' ');
-    const displayName = name
+    const fullName = this.authName.trim() || email.split('@')[0].replace(/\./g, ' ');
+    const normalizedName = fullName
       .split(' ')
       .filter(Boolean)
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
 
-    const user = {
-      name: displayName,
-      email,
-      role: this.authMode().value === 'signup' ? 'HR Coordinator' : 'Team Member'
-    };
+    const observe$ = this.authMode().value === 'signup'
+      ? this.internService.signup(normalizedName, email, password)
+      : this.internService.login(email, password);
 
-    this.currentUser.set(user);
-    this.isAuthenticated.set(true);
-    this.authError.set(null);
-    this.authSuccess.set(`Welcome ${displayName}!`);
-    localStorage.setItem('hatch_current_user', JSON.stringify(user));
-    this.showToast(`Welcome back, ${displayName}`, 'success');
+    observe$.subscribe({
+      next: (response) => {
+        const token = (response as any).token;
+        if (token) {
+          this.internService.setAuthToken(token);
+          const user: AuthUser = {
+            name: normalizedName,
+            email,
+            role: this.authMode().value === 'signup' ? 'HR Coordinator' : 'Team Member'
+          };
+          this.currentUser.set(user);
+          this.isAuthenticated.set(true);
+          localStorage.setItem('hatch_current_user', JSON.stringify(user));
+          this.authError.set(null);
+          this.authSuccess.set(`Welcome ${user.name}!`);
+          this.loadData();
+        } else if (this.authMode().value === 'signup') {
+          // Some signup flows return no token; authenticate immediately after signup.
+          this.internService.login(email, password).subscribe({
+            next: (loginResponse) => {
+              const loginToken = (loginResponse as any).token;
+              if (loginToken) {
+                this.internService.setAuthToken(loginToken);
+                const user: AuthUser = { name: normalizedName, email, role: 'HR Coordinator' };
+                this.currentUser.set(user);
+                this.isAuthenticated.set(true);
+                localStorage.setItem('hatch_current_user', JSON.stringify(user));
+                this.authError.set(null);
+                this.authSuccess.set(`Welcome ${user.name}!`);
+                this.loadData();
+              }
+            },
+            error: (err) => {
+              this.authError.set(err.message || 'Signup succeeded but login failed.');
+            }
+          });
+        } else {
+          this.authError.set('Authentication response did not include a token.');
+        }
+      },
+      error: (err) => {
+        this.authError.set(err?.error?.message || err.message || 'Authentication failed. Please check your credentials.');
+      }
+    });
   }
 
   logout() {
@@ -232,6 +295,7 @@ export class App implements OnInit {
     this.authName = '';
     this.authError.set(null);
     this.authSuccess.set(null);
+    this.internService.setAuthToken(null);
     localStorage.removeItem('hatch_current_user');
     this.showToast('You have been logged out.', 'info');
   }
