@@ -101,6 +101,17 @@ export class InternService {
     }
   }
 
+  private refreshMasterLists() {
+    this.getRoles().subscribe({
+      next: roles => this.rolesList.set(roles),
+      error: err => console.error('Failed to refresh roles:', err)
+    });
+    this.getInternshipTypes().subscribe({
+      next: types => this.typesList.set(types),
+      error: err => console.error('Failed to refresh internship types:', err)
+    });
+  }
+
   private getAuthHeaders(): HttpHeaders {
     const token = this.authToken();
     const headersConfig: Record<string, string> = {
@@ -124,9 +135,63 @@ export class InternService {
     return this.http.get<AuthUser>(`${this.apiUrl()}/Auth/me`, { headers: this.getAuthHeaders() });
   }
 
+  createRole(role: Omit<Role, 'roleId'>): Observable<Role> {
+    return this.http.post<Role>(`${this.apiUrl()}/Roles`, role, { headers: this.getAuthHeaders() }).pipe(
+      map(createdRole => {
+        this.rolesList.set([...this.rolesList(), createdRole]);
+        return createdRole;
+      })
+    );
+  }
+
+  updateRole(id: number, role: Role): Observable<Role> {
+    return this.http.put<Role>(`${this.apiUrl()}/Roles/${id}`, role, { headers: this.getAuthHeaders() }).pipe(
+      map(updatedRole => {
+        this.rolesList.set(this.rolesList().map(current => current.roleId === id ? updatedRole : current));
+        return updatedRole;
+      })
+    );
+  }
+
+  deleteRole(id: number): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl()}/Roles/${id}`, { headers: this.getAuthHeaders() }).pipe(
+      map(() => {
+        this.rolesList.set(this.rolesList().filter(role => role.roleId !== id));
+        return true;
+      })
+    );
+  }
+
   // Get Roles
   getRoles(): Observable<Role[]> {
     return this.http.get<Role[]>(`${this.apiUrl()}/Roles`, { headers: this.getAuthHeaders() });
+  }
+
+  createInternshipType(type: Omit<InternshipType, 'internshipTypeId'>): Observable<InternshipType> {
+    return this.http.post<InternshipType>(`${this.apiUrl()}/InternshipTypes`, type, { headers: this.getAuthHeaders() }).pipe(
+      map(createdType => {
+        this.typesList.set([...this.typesList(), createdType]);
+        return createdType;
+      })
+    );
+  }
+
+  updateInternshipType(id: number, type: InternshipType): Observable<InternshipType> {
+    return this.http.put<InternshipType>(`${this.apiUrl()}/InternshipTypes/${id}`, type, { headers: this.getAuthHeaders() }).pipe(
+      map(updatedType => {
+        this.typesList.set(this.typesList().map(current => current.internshipTypeId === id ? updatedType : current));
+        return updatedType;
+      })
+    );
+  }
+
+  deleteInternshipType(id: number): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl()}/InternshipTypes/${id}`, { headers: this.getAuthHeaders() }).pipe(
+      map(() => {
+        this.typesList.set(this.typesList().filter(type => type.internshipTypeId !== id));
+        return true;
+      })
+    );
   }
 
   // Get Internship Types

@@ -27,7 +27,7 @@ export class App implements OnInit {
   currentUser = signal<{ name: string; email: string; role: string } | null>(null);
 
   // State Signals
-  activeTab = signal<'dashboard' | 'interns' | 'onboard' | 'config'>('dashboard');
+  activeTab = signal<'dashboard' | 'interns' | 'onboard' | 'roles' | 'types' | 'config'>('dashboard');
   interns = signal<Intern[]>([]);
   
   // Search & Filter Signals
@@ -42,6 +42,11 @@ export class App implements OnInit {
   formJoiningDate = '';
   formRoleId: number | null = null;
   formTypeId: number | null = null;
+  editingRoleId = signal<number | null>(null);
+  roleNameInput = '';
+  editingTypeId = signal<number | null>(null);
+  internshipTypeNameInput = '';
+  internshipTypeDurationInput: number | string = '';
 
 
   // UI Toast Notification
@@ -204,6 +209,113 @@ export class App implements OnInit {
     this.formRoleId = intern.roleId;
     this.formTypeId = intern.internshipTypeId;
     this.activeTab.set('onboard');
+  }
+
+  startRoleManagement() {
+    this.editingRoleId.set(null);
+    this.roleNameInput = '';
+    this.activeTab.set('roles');
+  }
+
+  startRoleEditing(role: Role) {
+    this.editingRoleId.set(role.roleId);
+    this.roleNameInput = role.roleName;
+    this.activeTab.set('roles');
+  }
+
+  submitRole() {
+    const roleName = this.roleNameInput.trim();
+    if (!roleName) {
+      this.showToast('Role name is required', 'error');
+      return;
+    }
+
+    const editingRoleId = this.editingRoleId();
+    if (editingRoleId !== null) {
+      this.internService.updateRole(editingRoleId, { roleId: editingRoleId, roleName }).subscribe({
+        next: () => {
+          this.showToast(`Role "${roleName}" updated successfully`, 'success');
+          this.startRoleManagement();
+        },
+        error: (err) => this.showToast(err.message || 'Failed to update role', 'error')
+      });
+    } else {
+      this.internService.createRole({ roleName }).subscribe({
+        next: () => {
+          this.showToast(`Role "${roleName}" added successfully`, 'success');
+          this.startRoleManagement();
+        },
+        error: (err) => this.showToast(err.message || 'Failed to add role', 'error')
+      });
+    }
+  }
+
+  deleteRole(roleId: number, roleName: string) {
+    if (confirm(`Delete role "${roleName}"?`)) {
+      this.internService.deleteRole(roleId).subscribe({
+        next: () => this.showToast(`Role "${roleName}" removed successfully`, 'success'),
+        error: (err) => this.showToast(err.message || 'Failed to delete role', 'error')
+      });
+    }
+  }
+
+  startTypeManagement() {
+    this.editingTypeId.set(null);
+    this.internshipTypeNameInput = '';
+    this.internshipTypeDurationInput = '';
+    this.activeTab.set('types');
+  }
+
+  startTypeEditing(type: InternshipType) {
+    this.editingTypeId.set(type.internshipTypeId);
+    this.internshipTypeNameInput = type.typeName;
+    this.internshipTypeDurationInput = type.durationInMonths ?? '';
+    this.activeTab.set('types');
+  }
+
+  submitInternshipType() {
+    const typeName = this.internshipTypeNameInput.trim();
+    const duration = Number(this.internshipTypeDurationInput);
+
+    if (!typeName) {
+      this.showToast('Internship type name is required', 'error');
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      this.showToast('Duration must be a positive number of months', 'error');
+      return;
+    }
+
+    const editingTypeId = this.editingTypeId();
+    const payload = { internshipTypeId: editingTypeId ?? 0, typeName, durationInMonths: duration };
+
+    if (editingTypeId !== null) {
+      this.internService.updateInternshipType(editingTypeId, payload).subscribe({
+        next: () => {
+          this.showToast(`Internship type "${typeName}" updated successfully`, 'success');
+          this.startTypeManagement();
+        },
+        error: (err) => this.showToast(err.message || 'Failed to update internship type', 'error')
+      });
+    } else {
+      this.internService.createInternshipType({ typeName, durationInMonths: duration }).subscribe({
+        next: () => {
+          this.showToast(`Internship type "${typeName}" added successfully`, 'success');
+          this.startTypeManagement();
+        },
+        error: (err) => this.showToast(err.message || 'Failed to add internship type', 'error')
+      });
+    }
+  }
+
+  deleteInternshipType(typeId: number, typeName: string) {
+    if (confirm(`Delete internship type "${typeName}"?`)) {
+      this.internService.deleteInternshipType(typeId).subscribe({
+        next: () => this.showToast(`Internship type "${typeName}" removed successfully`, 'success'),
+        error: (err) => this.showToast(err.message || 'Failed to delete internship type', 'error')
+      });
+    }
   }
 
   toggleAuthMode(mode: 'signin' | 'signup') {

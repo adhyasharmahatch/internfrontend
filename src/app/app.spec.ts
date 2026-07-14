@@ -20,4 +20,13 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.auth-card')?.textContent).toContain('Sign in to continue');
   });
+
+  it('should show the roles management view when selected', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.activeTab.set('roles');
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Roles Management');
+  });
 });
