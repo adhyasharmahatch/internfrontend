@@ -1,0 +1,94 @@
+<div class="page-header">
+  <div class="page-title">
+    <h2>{{ editingInternId ? 'Edit Intern Profile' : 'Onboard New Intern' }}</h2>
+    <p>{{ editingInternId ? 'Edit fields below to update records in database.' : 'Enter contact, role, and schedule information to add intern.' }}</p>
+  </div>
+</div>
+
+<div class="section-card">
+  <form (ngSubmit)="formSubmit.emit()" #internForm="ngForm">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" for="fullName">Full Name</label>
+        <input 
+          type="text" 
+          id="fullName" 
+          name="fullName" 
+          class="form-control" 
+          placeholder="e.g. Liam Sterling"
+          [ngModel]="formFullName"
+          (ngModelChange)="formFullNameChange.emit($event)"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="workEmail">Work Email</label>
+        <input 
+          type="email" 
+          id="workEmail" 
+          name="workEmail" 
+          class="form-control" 
+          placeholder="e.g. liam.sterling@hatch.com"
+          [ngModel]="formWorkEmail"
+          (ngModelChange)="formWorkEmailChange.emit($event)"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="joiningDate">Joining Date</label>
+        <input 
+          type="date" 
+          id="joiningDate" 
+          name="joiningDate" 
+          class="form-control"
+          [ngModel]="formJoiningDate"
+          (ngModelChange)="formJoiningDateChange.emit($event)"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="roleId">Assigned Role</label>
+        <select 
+          id="roleId" 
+          name="roleId" 
+          class="form-control" 
+          [ngModel]="formRoleId"
+          (ngModelChange)="formRoleIdChange.emit($event)"
+          required
+        >
+          <option [value]="null" disabled selected>Select Role...</option>
+          @for (role of roles; track role.roleId) {
+            <option [value]="role.roleId">{{ role.roleName }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="typeId">Internship Type</label>
+        <select 
+          id="typeId" 
+          name="typeId" 
+          class="form-control" 
+          [ngModel]="formTypeId"
+          (ngModelChange)="formTypeIdChange.emit($event)"
+          required
+        >
+          <option [value]="null" disabled selected>Select Type...</option>
+          @for (type of internshipTypes; track type.internshipTypeId) {
+            <option [value]="type.internshipTypeId">{{ type.typeName }} ({{ type.durationInMonths }} Months)</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancelRequested.emit()">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        {{ editingInternId ? 'Save Changes' : 'Register Intern' }}
+      </button>
+    </div>
+  </form>
+</div>

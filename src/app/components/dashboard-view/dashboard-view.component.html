@@ -1,0 +1,99 @@
+<div class="page-header">
+  <div class="page-title">
+    <h2>Dashboard Overview</h2>
+    <p>Key metrics and onboarding analytics for Hatch student interns.</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"></path>
+        <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+      </svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Total Interns</span>
+      <span class="stat-value">{{ totalInterns }}</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrapper">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Full-Time</span>
+      <span class="stat-value">{{ fullTimeCount }}</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrapper">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Remote</span>
+      <span class="stat-value">{{ remoteCount }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-sections">
+  <div class="section-card">
+    <h3 class="section-title">Intern Distribution by Role</h3>
+    @if (totalInterns > 0) {
+      <div class="dist-list">
+        @for (item of roleDistribution; track item.name) {
+          <div class="dist-item">
+            <div class="dist-meta">
+              <span class="dist-label">{{ item.name }}</span>
+              <span class="dist-count">{{ item.count }} ({{ item.percentage }}%)</span>
+            </div>
+            <div class="dist-progress-bar">
+              <div class="dist-progress-fill" [style.width.%]="item.percentage"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px;">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </span>
+        <p class="empty-title">No Intern Data Available</p>
+        <p class="empty-desc">Once you register interns in the directory, you'll see active role analytics here.</p>
+        <button class="btn btn-primary" (click)="onboardRequested.emit()">Onboard an Intern</button>
+      </div>
+    }
+  </div>
+
+  <div class="section-card">
+    <h3 class="section-title">Recent Onboardings</h3>
+    @if (recentJoiners.length > 0) {
+      <div class="recent-list">
+        @for (intern of recentJoiners; track intern.internId) {
+          <div class="recent-item">
+            <div class="recent-avatar">{{ intern.fullName.charAt(0) }}</div>
+            <div class="recent-info">
+              <span class="recent-name">{{ intern.fullName }}</span>
+              <span class="recent-role">{{ intern.role?.roleName || 'Intern' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.95rem;">
+        No interns onboarded yet.
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,51 @@
+<div class="page-header">
+  <div class="page-title">
+    <h2>{{ title }}</h2>
+    <p>{{ description }}</p>
+  </div>
+</div>
+
+<div class="section-card">
+  <form (ngSubmit)="formSubmitted.emit()" #managementForm="ngForm">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" for="nameInput">{{ isRoleView ? 'Role Name' : 'Type Name' }}</label>
+        <input id="nameInput" name="nameInput" class="form-control" [placeholder]="isRoleView ? 'e.g. Software Engineer' : 'e.g. Remote Internship'" [ngModel]="formValue" (ngModelChange)="formValueChange.emit($event)" required />
+      </div>
+      @if (!isRoleView) {
+        <div class="form-group">
+          <label class="form-label" for="durationInput">Duration (Months)</label>
+          <input id="durationInput" name="durationInput" type="number" min="1" class="form-control" [ngModel]="formSecondaryValue" (ngModelChange)="formSecondaryValueChange.emit($event)" required />
+        </div>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="clearRequested.emit()">Clear</button>
+      <button type="submit" class="btn btn-primary">
+        {{ editingId ? 'Save' : 'Add' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="section-card" style="margin-top: 1.5rem;">
+  <h3 class="section-title">Available {{ isRoleView ? 'Roles' : 'Internship Types' }}</h3>
+  @if (items.length > 0) {
+    <div class="master-table-list">
+      @for (item of items; track getItemId(item)) {
+        <div class="master-table-item">
+          <span>{{ getItemLabel(item) }}</span>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary" (click)="editRequested.emit(getItemId(item))">Edit</button>
+            <button type="button" class="btn btn-primary" (click)="deleteRequested.emit(getItemId(item))">Delete</button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p class="empty-desc">No {{ isRoleView ? 'roles' : 'internship types' }} have been added yet.</p>
+    </div>
+  }
+</div>

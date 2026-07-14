@@ -2,6 +2,10 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from './header/header.component';
+import { DashboardViewComponent } from './components/dashboard-view/dashboard-view.component';
+import { InternsDirectoryViewComponent } from './components/interns-directory-view/interns-directory-view.component';
+import { OnboardFormViewComponent } from './components/onboard-form-view/onboard-form-view.component';
+import { ManagementViewComponent } from './components/management-view/management-view.component';
 import { AuthUser, InternService, Intern, Role, InternshipType } from './services/intern.service';
 
 interface AuthMode { value: 'signin' | 'signup'; label: string; subtitle: string; }
@@ -9,7 +13,7 @@ interface AuthMode { value: 'signin' | 'signup'; label: string; subtitle: string
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, DashboardViewComponent, InternsDirectoryViewComponent, OnboardFormViewComponent, ManagementViewComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -223,6 +227,20 @@ export class App implements OnInit {
     this.activeTab.set('roles');
   }
 
+  editRoleById(id: number) {
+    const role = this.roles().find(item => item.roleId === id);
+    if (role) {
+      this.startRoleEditing(role);
+    }
+  }
+
+  deleteRoleById(id: number) {
+    const role = this.roles().find(item => item.roleId === id);
+    if (role) {
+      this.deleteRole(role.roleId, role.roleName);
+    }
+  }
+
   submitRole() {
     const roleName = this.roleNameInput.trim();
     if (!roleName) {
@@ -271,6 +289,20 @@ export class App implements OnInit {
     this.internshipTypeNameInput = type.typeName;
     this.internshipTypeDurationInput = type.durationInMonths ?? '';
     this.activeTab.set('types');
+  }
+
+  editTypeById(id: number) {
+    const type = this.internshipTypes().find(item => item.internshipTypeId === id);
+    if (type) {
+      this.startTypeEditing(type);
+    }
+  }
+
+  deleteTypeById(id: number) {
+    const type = this.internshipTypes().find(item => item.internshipTypeId === id);
+    if (type) {
+      this.deleteInternshipType(type.internshipTypeId, type.typeName);
+    }
   }
 
   submitInternshipType() {
