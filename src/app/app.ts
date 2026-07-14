@@ -394,7 +394,7 @@ export class App implements OnInit {
           const user: AuthUser = {
             name: normalizedName,
             email,
-            role: this.authMode().value === 'signup' ? 'HR Coordinator' : 'Team Member'
+            role: this.authMode().value === 'signup' ? 'User' : 'Admin'
           };
           this.currentUser.set(user);
           this.isAuthenticated.set(true);
@@ -409,7 +409,7 @@ export class App implements OnInit {
               const loginToken = (loginResponse as any).token;
               if (loginToken) {
                 this.internService.setAuthToken(loginToken);
-                const user: AuthUser = { name: normalizedName, email, role: 'HR Coordinator' };
+                const user: AuthUser = { name: normalizedName, email, role: 'User' };
                 this.currentUser.set(user);
                 this.isAuthenticated.set(true);
                 localStorage.setItem('hatch_current_user', JSON.stringify(user));

@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   @Input() userName = 'Hatch User';
-  @Input() userRole = 'Team Member';
+  @Input() userRole = 'Admin';
   @Input() userEmail = '';
   @Input() showLogout = false;
   @Output() logoutClicked = new EventEmitter<void>();

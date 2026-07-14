@@ -49,7 +49,7 @@
     </div>
   </div>
 } @else {
-<app-header [userName]="currentUser()?.name || 'Hatch User'" [userRole]="currentUser()?.role || 'Team Member'" [userEmail]="currentUser()?.email || ''" [showLogout]="true" (logoutClicked)="logout()"></app-header>
+<app-header [userName]="currentUser()?.name || 'Hatch User'" [userRole]="currentUser()?.role || 'Admin'" [userEmail]="currentUser()?.email || ''" [showLogout]="true" (logoutClicked)="logout()"></app-header>
 
 <div class="main-content">
   <!-- Sidebar Navigation -->
