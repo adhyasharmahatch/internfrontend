@@ -147,8 +147,9 @@ export class InternService {
   updateRole(id: number, role: Role): Observable<Role> {
     return this.http.put<Role>(`${this.apiUrl()}/Roles/${id}`, role, { headers: this.getAuthHeaders() }).pipe(
       map(updatedRole => {
-        this.rolesList.set(this.rolesList().map(current => current.roleId === id ? updatedRole : current));
-        return updatedRole;
+        const newRole = this.normalizeRoleResponse(updatedRole, role);
+        this.rolesList.set(this.rolesList().map(current => current.roleId === id ? newRole : current));
+        return newRole;
       })
     );
   }
@@ -179,8 +180,9 @@ export class InternService {
   updateInternshipType(id: number, type: InternshipType): Observable<InternshipType> {
     return this.http.put<InternshipType>(`${this.apiUrl()}/InternshipTypes/${id}`, type, { headers: this.getAuthHeaders() }).pipe(
       map(updatedType => {
-        this.typesList.set(this.typesList().map(current => current.internshipTypeId === id ? updatedType : current));
-        return updatedType;
+        const newType = this.normalizeInternshipTypeResponse(updatedType, type);
+        this.typesList.set(this.typesList().map(current => current.internshipTypeId === id ? newType : current));
+        return newType;
       })
     );
   }
@@ -209,6 +211,35 @@ export class InternService {
       role: roles.find(r => r.roleId === intern.roleId) || intern.role,
       internshipType: types.find(t => t.internshipTypeId === intern.internshipTypeId) || intern.internshipType
     };
+  }
+
+  // Normalize various possible API response shapes for Role
+  private normalizeRoleResponse(resp: any, fallback: Role): Role {
+    if (!resp) return fallback;
+    const candidate = resp.role ?? resp.Role ?? resp.data ?? resp;
+    if (candidate && typeof candidate.roleId === 'number' && typeof candidate.roleName === 'string') {
+      return candidate as Role;
+    }
+    if (candidate && typeof candidate.roleId === 'number') {
+      const rn = candidate.roleName ?? candidate.Rolename ?? candidate.name ?? fallback.roleName;
+      return { roleId: candidate.roleId, roleName: String(rn || fallback.roleName) };
+    }
+    return fallback;
+  }
+
+  // Normalize various possible API response shapes for InternshipType
+  private normalizeInternshipTypeResponse(resp: any, fallback: InternshipType): InternshipType {
+    if (!resp) return fallback;
+    const candidate = resp.internshipType ?? resp.InternshipType ?? resp.data ?? resp;
+    if (candidate && typeof candidate.internshipTypeId === 'number' && typeof candidate.typeName === 'string') {
+      return candidate as InternshipType;
+    }
+    if (candidate && typeof candidate.internshipTypeId === 'number') {
+      const tn = candidate.typeName ?? candidate.TypeName ?? candidate.name ?? fallback.typeName;
+      const dur = candidate.durationInMonths ?? candidate.duration ?? fallback.durationInMonths;
+      return { internshipTypeId: candidate.internshipTypeId, typeName: String(tn || fallback.typeName), durationInMonths: dur };
+    }
+    return fallback;
   }
 
   // Get Interns

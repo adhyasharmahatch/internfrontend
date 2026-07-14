@@ -251,9 +251,10 @@ export class App implements OnInit {
     const editingRoleId = this.editingRoleId();
     if (editingRoleId !== null) {
       this.internService.updateRole(editingRoleId, { roleId: editingRoleId, roleName }).subscribe({
-        next: () => {
+        next: (response : any) => {
           this.showToast(`Role "${roleName}" updated successfully`, 'success');
           this.startRoleManagement();
+          console.log(response)
         },
         error: (err) => this.showToast(err.message || 'Failed to update role', 'error')
       });
